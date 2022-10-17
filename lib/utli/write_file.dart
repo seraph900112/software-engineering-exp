@@ -25,18 +25,18 @@ class WriteFile {
   }
 
   Future<void> writeFile(
-      List<FileSystemEntity> files, Directory backupDir, Directory originDir) async {
+      List<FileSystemEntity> files, Directory writeDir, Directory sourceDir) async {
     for (int i = 0; i < files.length; i++) {
       //backup Dir
       if (files[i] is Directory) {
         Directory tmp = files[i] as Directory;
         String tmpName = tmp.path.substring(tmp.path.lastIndexOf('/'));
-        Directory newDir = Directory('${backupDir.path}$tmpName');
+        Directory newDir = Directory('${writeDir.path}$tmpName');
         if (!newDir.existsSync()) {
           newDir.createSync();
         }
-        Directory nextBackUpDir = Directory('${backupDir.path}$tmpName');
-        Directory nextOriginDir = Directory('${originDir.path}$tmpName');
+        Directory nextBackUpDir = Directory('${writeDir.path}$tmpName');
+        Directory nextOriginDir = Directory('${sourceDir.path}$tmpName');
         writeFile(tmp.listSync(), nextBackUpDir, nextOriginDir);
       }
       //backup File
@@ -44,11 +44,13 @@ class WriteFile {
         File tmp = files[i] as File;
         Uint8List tmpString = await tmp.readAsBytes();
         String fileName = tmp.path.substring(tmp.path.lastIndexOf('/'), tmp.path.length);
-        File newFile = File('${backupDir.path}$fileName');
+        File newFile = File('${writeDir.path}$fileName');
         newFile.writeAsBytesSync(tmpString);
       }
     }
   }
 
-  Future<void> restoreFile() async {}
+  Future<void> restoreFile(List<FileSystemEntity> files) async {
+
+  }
 }

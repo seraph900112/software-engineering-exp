@@ -77,13 +77,13 @@ class _MyHomePageState extends State<MyHomePage> {
           });
     }
     return RestoreFile(
+      key: restoreKey,
       checkboxVisible: checkBoxVisible,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    print('build');
     return Scaffold(
       appBar: AppBar(
         title: Text(title + path),
@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 10,top: 20),
+                padding: const EdgeInsets.only(bottom: 10, top: 20),
                 child: ElevatedButton(
                     style: ButtonStyle(
                       backgroundColor: selectIndex == 0
@@ -122,7 +122,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     )),
               ),
               ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    selectIndex == 0
+                        ? backupKey.currentState?.backUp()
+                        : restoreKey.currentState?.restore();
+                  },
                   child: Text(
                     selectIndex == 0 ? 'BackUp' : 'Restore',
                   )),

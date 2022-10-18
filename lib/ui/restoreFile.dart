@@ -33,16 +33,6 @@ class RestoreFileState extends State<RestoreFile> {
     _listOfFiles();
   }
 
-  void backUp() {
-    List<FileSystemEntity> tmp = <FileSystemEntity>[];
-    for (int i = 0; i < file.length; i++) {
-      if (checkboxStatus[i]!) {
-        tmp.add(file[i]);
-      }
-    }
-    WriteFile().backUpFile(tmp);
-  }
-
   void _listOfFiles() {
     setState(() {
       file = Directory(path).listSync();
@@ -118,6 +108,37 @@ class RestoreFileState extends State<RestoreFile> {
     return path.substring(pos + 1, path.length);
   }
 
+  void restore() {
+    List<FileSystemEntity> tmp = <FileSystemEntity>[];
+    if (path == rootPath) {
+      for (int i = 0; i < file.length; i++) {
+        if (checkboxStatus[i]!) {
+          Directory tmpDir = file[i] as Directory;
+          List<FileSystemEntity> tmpList = tmpDir.listSync();
+          print(tmpList.length);
+          late FileSystemEntity remove;
+          for (var element in tmpList) {
+            if (element.path.substring(element.path.lastIndexOf('/') + 1) == 'restoreInfo.txt') {
+              remove = element;
+              print('remove');
+            }
+          }
+          tmpList.remove(remove);
+          print(tmpList.length);
+          WriteFile().restoreFile(tmpList);
+        }
+      }
+      return;
+    }
+    for (int i = 0; i < file.length; i++) {
+      if (checkboxStatus[i]!) {
+        tmp.add(file[i]);
+      }
+    }
+    print('restore');
+    //WriteFile().restoreFile(tmp);
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -127,8 +148,8 @@ class RestoreFileState extends State<RestoreFile> {
           if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           }
-          if(snapshot.hasData){
-            if(!hasInit){
+          if (snapshot.hasData) {
+            if (!hasInit) {
               Directory dir = snapshot.data;
               rootPath = dir.path;
               path = rootPath;

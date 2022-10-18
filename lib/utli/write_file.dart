@@ -33,7 +33,7 @@ class WriteFile {
         String tmpName = tmp.path.substring(tmp.path.lastIndexOf('/'));
         Directory newDir = Directory('${writeDir.path}$tmpName');
         if (!newDir.existsSync()) {
-          newDir.createSync();
+          newDir.createSync(recursive: true);
         }
         Directory nextBackUpDir = Directory('${writeDir.path}$tmpName');
         Directory nextOriginDir = Directory('${sourceDir.path}$tmpName');
@@ -51,6 +51,22 @@ class WriteFile {
   }
 
   Future<void> restoreFile(List<FileSystemEntity> files) async {
-
+    //find restoreInfo
+    if (files.isEmpty) {
+      return;
+    }
+    RegExp regexp = RegExp(r'(\d{4}-\d{2}-\d{4}:\d{2}:\d{2})');
+    FileSystemEntity file = files[0];
+    int pos = file.path.indexOf(regexp) + 18;
+    String prefix = file.path.substring(0, pos);
+    File restoreInfo = File('$prefix/restoreInfo.txt');
+    String originPath = restoreInfo.readAsStringSync();
+    String suffix = file.path.substring(pos);
+    String writePath = originPath + suffix;
+    print('origin: $originPath');
+    print('suffix: $suffix');
+    print(writePath);
+    print(files[0].path);
+    writeFile(files, Directory(writePath).parent, Directory(files[0].path));
   }
 }

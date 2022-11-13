@@ -35,6 +35,7 @@ dependencies:
   animations: ^2.0.7
   show_up_animation: ^2.0.0
   intl: ^0.17.0
+  eyro_toast: ^1.0.0
 
 
 

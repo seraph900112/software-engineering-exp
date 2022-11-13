@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  eyro_toast
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

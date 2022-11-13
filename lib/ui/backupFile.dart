@@ -7,10 +7,15 @@ import 'package:show_up_animation/show_up_animation.dart';
 import '../utli/write_file.dart';
 
 class BackupFile extends StatefulWidget {
-  const BackupFile({super.key, required this.checkboxVisible, required this.getPath});
+  const BackupFile(
+      {super.key,
+      required this.checkboxVisible,
+      required this.getPath,
+      required this.changeCheckBoxStatus});
 
   final bool checkboxVisible;
   final Function(String) getPath;
+  final Function changeCheckBoxStatus;
 
   @override
   State<StatefulWidget> createState() => BackupFileState();
@@ -23,6 +28,7 @@ class BackupFileState extends State<BackupFile> {
   List<FileSystemEntity> file = <FileSystemEntity>[];
   late List<bool?> checkboxStatus;
   late Directory backupDir;
+  int count = 0;
 
   @override
   void initState() {
@@ -30,14 +36,120 @@ class BackupFileState extends State<BackupFile> {
     _listOfFiles();
   }
 
-  void backUp() {
+  Future<void> backUp() async {
     List<FileSystemEntity> tmp = <FileSystemEntity>[];
     for (int i = 0; i < file.length; i++) {
       if (checkboxStatus[i]!) {
         tmp.add(file[i]);
       }
     }
-    WriteFile().backUpFile(tmp);
+    bool res = await showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text(
+          'Are you sure to backup?',
+          style: TextStyle(color: Colors.blueAccent),
+        ),
+        content: SizedBox(
+          width: 500,
+          height: 100 + tmp.length * 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 15),
+                child: Text(
+                  'The following files or directories will be backup: ',
+                  style: TextStyle(color: Colors.blueAccent, fontSize: 20),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: tmp.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Text(pathToName(tmp[index].path));
+                    }),
+              )
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (res) {
+      // show the loading dialog
+      showDialog(
+          // The user CANNOT close this dialog  by pressing outsite it
+          barrierDismissible: false,
+          context: context,
+          builder: (_) {
+            return Dialog(
+              // The background color
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    // The loading indicator
+                    CircularProgressIndicator(),
+                    SizedBox(
+                      height: 15,
+                    ),
+                    // Some text
+                    Text('Loading...')
+                  ],
+                ),
+              ),
+            );
+          });
+
+      // Your asynchronous computation here (fetching data from an API, processing files, inserting something to the database, etc)
+      await WriteFile().backUpFile(tmp);
+      // Close the dialog programmatically
+      Navigator.of(context).pop();
+      checkboxStatus.fillRange(0, checkboxStatus.length, false);
+      widget.changeCheckBoxStatus();
+    }
+
+    showDialog(
+        // The user CANNOT close this dialog  by pressing outsite it
+        barrierDismissible: false,
+        context: context,
+        builder: (_) {
+          return Dialog(
+            // The background color
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  // The loading indicator
+                  Icon(Icons.check,color: Colors.green,),
+                  Text("backup success！！")
+                ],
+              ),
+            ),
+          );
+        });
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.of(context).pop();
   }
 
   void _listOfFiles() async {
@@ -163,7 +275,13 @@ class BackupFileState extends State<BackupFile> {
                 value: checkboxStatus[index],
                 onChanged: (bool? value) {
                   setState(() {
+                    if (value!) {
+                      count++;
+                    } else {
+                      count--;
+                    }
                     checkboxStatus[index] = value;
+                    print(count);
                   });
                 },
               ),
@@ -210,4 +328,5 @@ class BackupFileState extends State<BackupFile> {
       ),
     );
   }
+
 }

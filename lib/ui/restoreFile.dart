@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -17,7 +18,7 @@ class RestoreFile extends StatefulWidget {
 }
 
 class RestoreFileState extends State<RestoreFile> {
-  String path = '/home/eric/Downloads';
+  late String path = '/home/eric/Downloads';
   String rootPath = '/';
   ScrollController scrollController = ScrollController();
   List<FileSystemEntity> file = <FileSystemEntity>[];
@@ -25,6 +26,7 @@ class RestoreFileState extends State<RestoreFile> {
   late Directory backupDir;
   bool hasInit = false;
   Future<Directory?>? _appSupportDirectory;
+  int count = 0;
 
   @override
   void initState() {
@@ -42,10 +44,11 @@ class RestoreFileState extends State<RestoreFile> {
   }
 
   Future<void> getBackUpRoot() async {
-    _appSupportDirectory = getApplicationDocumentsDirectory();
+    _appSupportDirectory = getApplicationSupportDirectory();
     if (_appSupportDirectory != null) {
       rootPath = (await _appSupportDirectory)!.path;
     }
+    print(rootPath);
     path = rootPath;
   }
 
@@ -108,35 +111,84 @@ class RestoreFileState extends State<RestoreFile> {
     return path.substring(pos + 1, path.length);
   }
 
-  void restore() {
+  void restore() async {
     List<FileSystemEntity> tmp = <FileSystemEntity>[];
-    if (path == rootPath) {
-      for (int i = 0; i < file.length; i++) {
-        if (checkboxStatus[i]!) {
-          Directory tmpDir = file[i] as Directory;
-          List<FileSystemEntity> tmpList = tmpDir.listSync();
-          print(tmpList.length);
-          late FileSystemEntity remove;
-          for (var element in tmpList) {
-            if (element.path.substring(element.path.lastIndexOf('/') + 1) == 'restoreInfo.txt') {
-              remove = element;
-              print('remove');
-            }
-          }
-          tmpList.remove(remove);
-          print(tmpList.length);
-          WriteFile().restoreFile(tmpList);
-        }
-      }
-      return;
-    }
     for (int i = 0; i < file.length; i++) {
       if (checkboxStatus[i]!) {
         tmp.add(file[i]);
       }
     }
-    print('restore');
-    //WriteFile().restoreFile(tmp);
+    bool res = await showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text(
+          'Are you sure to restore?',
+          style: TextStyle(color: Colors.blueAccent),
+        ),
+        content: SizedBox(
+          width: 500,
+          height: 100 + tmp.length * 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 15),
+                child: Text(
+                  'The following files or directories will be restored: ',
+                  style: TextStyle(color: Colors.blueAccent, fontSize: 20),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: tmp.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Text(pathToName(tmp[index].path));
+                    }),
+              )
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (res) {
+      if (path == rootPath) {
+        for (int i = 0; i < file.length; i++) {
+          if (checkboxStatus[i]!) {
+            Directory tmpDir = file[i] as Directory;
+            List<FileSystemEntity> tmpList = tmpDir.listSync();
+            print(tmpList.length);
+            late FileSystemEntity remove;
+            for (var element in tmpList) {
+              if (element.path.substring(element.path.lastIndexOf('/') + 1) == 'restoreInfo.txt') {
+                remove = element;
+                print('remove');
+              }
+            }
+            tmpList.remove(remove);
+            print(tmpList.length);
+            WriteFile().restoreFile(tmpList);
+          }
+        }
+        return;
+      }
+      WriteFile().restoreFile(tmp);
+    }
   }
 
   @override
@@ -216,6 +268,11 @@ class RestoreFileState extends State<RestoreFile> {
                 value: checkboxStatus[index],
                 onChanged: (bool? value) {
                   setState(() {
+                    if (value!) {
+                      count++;
+                    } else {
+                      count--;
+                    }
                     checkboxStatus[index] = value;
                   });
                 },

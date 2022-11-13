@@ -8,6 +8,7 @@ import 'dart:io' as io;
 import 'dart:io';
 
 import 'package:animations/animations.dart';
+import 'package:eyro_toast/eyro_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:se_exp/ui/backupFile.dart';
@@ -43,16 +44,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String title = "BackUp System Current Dir:  ";
-  late Directory backupDir;
   bool checkBoxVisible = false;
   String path = '/';
   GlobalKey<BackupFileState> backupKey = GlobalKey();
   GlobalKey<RestoreFileState> restoreKey = GlobalKey();
   int selectIndex = 0;
-
-  Future<void> getBackUpDir() async {
-    backupDir = await getApplicationDocumentsDirectory();
-  }
 
   @override
   void initState() {
@@ -68,17 +64,32 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget bodyWidget() {
     if (selectIndex == 0) {
       return BackupFile(
-          key: backupKey,
-          checkboxVisible: checkBoxVisible,
-          getPath: (String path) {
-            setState(() {
-              this.path = path;
-            });
+        key: backupKey,
+        checkboxVisible: checkBoxVisible,
+        getPath: (String path) {
+          setState(() {
+            this.path = path;
           });
+        },
+        changeCheckBoxStatus: () {
+          setState(() {
+            checkBoxVisible = false;
+          });
+        },
+      );
     }
     return RestoreFile(
       key: restoreKey,
       checkboxVisible: checkBoxVisible,
+    );
+  }
+
+  Future<void> showToast() async {
+    // showing short Toast
+    await showToaster(
+      text: 'This is a centered Toaster',
+      gravity: ToastGravity.top,
+      backgroundColor: Colors.red,
     );
   }
 
@@ -124,8 +135,12 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                   onPressed: () {
                     selectIndex == 0
-                        ? backupKey.currentState?.backUp()
-                        : restoreKey.currentState?.restore();
+                        ? backupKey.currentState?.count == 0
+                            ? showToast()
+                            : backupKey.currentState?.backUp()
+                        : restoreKey.currentState?.count == 0
+                            ? showToast()
+                            : restoreKey.currentState?.restore();
                   },
                   child: Text(
                     selectIndex == 0 ? 'BackUp' : 'Restore',

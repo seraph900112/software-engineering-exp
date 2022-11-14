@@ -9,9 +9,13 @@ import 'package:show_up_animation/show_up_animation.dart';
 import '../utli/write_file.dart';
 
 class RestoreFile extends StatefulWidget {
-  const RestoreFile({super.key, required this.checkboxVisible});
+  const RestoreFile(
+      {super.key,
+      required this.checkboxVisible,
+      required this.changeCheckBoxStatus});
 
   final bool checkboxVisible;
+  final Function changeCheckBoxStatus;
 
   @override
   State<StatefulWidget> createState() => RestoreFileState();
@@ -66,7 +70,8 @@ class RestoreFileState extends State<RestoreFile> {
         checkboxStatus = List.filled(file.length, false);
         sortFiles(file);
         scrollController.animateTo(0,
-            duration: const Duration(milliseconds: 10), curve: Curves.elasticOut);
+            duration: const Duration(milliseconds: 10),
+            curve: Curves.elasticOut);
       });
     } catch (e) {
       //show alert dialog
@@ -108,23 +113,24 @@ class RestoreFileState extends State<RestoreFile> {
 
   String pathToName(String path) {
     late int pos;
-    if(Platform.isLinux){
+    if (Platform.isLinux) {
       pos = path.lastIndexOf('/');
     }
-    if(Platform.isWindows){
+    if (Platform.isWindows) {
       pos = path.lastIndexOf('\\');
     }
 
     return path.substring(pos + 1, path.length);
   }
 
-  void restore() async {
+  Future<void> restore() async {
     List<FileSystemEntity> tmp = <FileSystemEntity>[];
     for (int i = 0; i < file.length; i++) {
       if (checkboxStatus[i]!) {
         tmp.add(file[i]);
       }
     }
+
     bool res = await showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -142,7 +148,7 @@ class RestoreFileState extends State<RestoreFile> {
               const Padding(
                 padding: EdgeInsets.only(bottom: 15),
                 child: Text(
-                  'The following files or directories will be restored: ',
+                  'The following files or directories will be restore: ',
                   style: TextStyle(color: Colors.blueAccent, fontSize: 20),
                 ),
               ),
@@ -166,6 +172,10 @@ class RestoreFileState extends State<RestoreFile> {
           ),
           TextButton(
             onPressed: () {
+              if (!mounted) {
+                return;
+              }
+
               Navigator.pop(context, true);
             },
             child: const Text('OK'),
@@ -174,8 +184,78 @@ class RestoreFileState extends State<RestoreFile> {
       ),
     );
     if (res) {
-      WriteFile().restoreFile(tmp);
+      WriteFile writeFile = WriteFile();
+      print('aaaaaaaaaaaaaa');
+      // show the loading dialog
+      await showDialog(
+          // The user CANNOT close this dialog  by pressing outsite it
+          barrierDismissible: false,
+          context: context,
+          builder: (_) {
+            print('build---------------');
+            Future.delayed(Duration(seconds: 1)).then((value) async {
+              writeFile.restoreFile(tmp);
+              while (!writeFile.restorefinish) {
+                await Future.delayed(Duration(seconds: 1));
+              }
+              Navigator.pop(context);
+            });
+            return Dialog(
+              // The background color
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    // The loading indicator
+                    CircularProgressIndicator(),
+                    SizedBox(
+                      height: 15,
+                    ),
+                    // Some text
+                    Text('Loading...')
+                  ],
+                ),
+              ),
+            );
+          });
+      // Your asynchronous computation here (fetching data from an API, processing files, inserting something to the database, etc)
+      print('start restore');
+      //await Future.delayed(Duration(seconds: 10));
+      // Close the dialog programmatically
+      checkboxStatus.fillRange(0, checkboxStatus.length, false);
+      widget.changeCheckBoxStatus();
+    } else {
+      return;
     }
+
+    showDialog(
+        // The user CANNOT close this dialog  by pressing outsite it
+        barrierDismissible: false,
+        context: context,
+        builder: (_) {
+          return Dialog(
+            // The background color
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  // The loading indicator
+                  Icon(
+                    Icons.check,
+                    color: Colors.green,
+                  ),
+                  Text("backup success！！")
+                ],
+              ),
+            ),
+          );
+        });
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.of(context).pop();
   }
 
   @override
@@ -219,7 +299,10 @@ class RestoreFileState extends State<RestoreFile> {
                   changeDirectory(path, true);
                 },
                 child: Row(
-                  children: const [Icon(Icons.keyboard_backspace), Text("back")],
+                  children: const [
+                    Icon(Icons.keyboard_backspace),
+                    Text("back")
+                  ],
                 ))
           ],
           Column(

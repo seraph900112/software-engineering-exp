@@ -81,6 +81,11 @@ class _MyHomePageState extends State<MyHomePage> {
     return RestoreFile(
       key: restoreKey,
       checkboxVisible: checkBoxVisible,
+      changeCheckBoxStatus: (){
+        setState(() {
+          checkBoxVisible = false;
+        });
+      },
     );
   }
 

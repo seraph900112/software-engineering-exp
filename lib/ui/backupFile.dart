@@ -125,6 +125,8 @@ class BackupFileState extends State<BackupFile> {
       Navigator.of(context).pop();
       checkboxStatus.fillRange(0, checkboxStatus.length, false);
       widget.changeCheckBoxStatus();
+    } else {
+      return;
     }
 
     showDialog(
@@ -141,7 +143,10 @@ class BackupFileState extends State<BackupFile> {
                 mainAxisSize: MainAxisSize.min,
                 children: const [
                   // The loading indicator
-                  Icon(Icons.check,color: Colors.green,),
+                  Icon(
+                    Icons.check,
+                    color: Colors.green,
+                  ),
                   Text("backup success！！")
                 ],
               ),
@@ -175,7 +180,8 @@ class BackupFileState extends State<BackupFile> {
         checkboxStatus = List.filled(file.length, false);
         sortFiles(file);
         scrollController.animateTo(0,
-            duration: const Duration(milliseconds: 10), curve: Curves.elasticOut);
+            duration: const Duration(milliseconds: 10),
+            curve: Curves.elasticOut);
       });
     } catch (e) {
       print(e);
@@ -235,7 +241,10 @@ class BackupFileState extends State<BackupFile> {
                   widget.getPath(path);
                 },
                 child: Row(
-                  children: const [Icon(Icons.keyboard_backspace), Text("back")],
+                  children: const [
+                    Icon(Icons.keyboard_backspace),
+                    Text("back")
+                  ],
                 ))
           ],
           Column(
@@ -328,5 +337,4 @@ class BackupFileState extends State<BackupFile> {
       ),
     );
   }
-
 }

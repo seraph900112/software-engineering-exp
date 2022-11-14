@@ -5,12 +5,16 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../algrithom/ase.dart';
-import '../algrithom/decode_haffman.dart';
-import '../algrithom/encode_haffman.dart';
+//import '../algrithom/decode_haffman.dart';
+import '../algrithom/decode2.dart';
+//import '../algrithom/encode_haffman.dart';
+import '../algrithom/encode_haffman2.dart';
 import '../algrithom/tar_file_decode.dart';
 import '../algrithom/tar_file_encode.dart';
 
 class WriteFile {
+
+  bool restorefinish = false;
   Future<void> backUpFile(List<FileSystemEntity> files) async {
     //create a backup dir
     String backUpDir = (await getApplicationSupportDirectory()).path;
@@ -59,17 +63,23 @@ class WriteFile {
     }
     //压缩 加密
     var haffman = haffman_encode('$newDirPath.tar');
-    await haffman.haffmanencode();
+    haffman.haffmanencode();
     print('finish haffman');
-    while (!haffman.finished) {
+
+    /*while (!haffman.finished) {
       await Future.delayed(Duration(milliseconds: 500));
-    }
+      print(haffman.finished);
+    }*/
     var ase = encrypt_file('$newDirPath.tar.haffman', 'hshs');
+    print('start aes');
     ase.encryptfile();
+    print('finish aes');
     //delete dir
-    //backupDir.delete(recursive: true);
-    File('$newDirPath.tar').deleteSync();
+    backupDir.delete(recursive: true);
     File('$newDirPath.tar.haffman').deleteSync();
+    File('$newDirPath.tar').deleteSync();
+    //File('$newDirPath.tar').deleteSync();
+
   }
 
   Future<void> restoreFile(List<FileSystemEntity> files) async {
@@ -79,11 +89,13 @@ class WriteFile {
     }
     for (int i = 0; i < files.length; i++) {
       //解密
+      print('start aes___'+files[i].path);
       var ase=decrypt_file(files[i].path,'hshs');
       ase.decryptfile();
       //反压缩
       var tst=haffman_decode(files[i].path.replaceAll('.aes',''));
-      await tst.haffmandecode();
+      tst.haffmandecode();
+      print('finish haffman');
       //解包
       var decode=decode_tarfile(files[i].path.replaceAll('.haffman.aes',''));
       await decode.decodetarfile();
@@ -105,16 +117,24 @@ class WriteFile {
       print(restoreInfo.lengthSync());
       print('origin'+originPath);
       String writePath = originPath;
-      List<FileSystemEntity> tmpList = <FileSystemEntity>[];
       print(files[i].path.substring(0 , files[i].path.length -16));
       Directory mainDir = Directory(files[i].path.substring(0 , files[i].path.length -16));
       //write file
       await writeFile(mainDir.listSync(), Directory(writePath), Directory(files[0].path));
+
+
+      File('$prefix.tar.haffman').delete();
+      File('$prefix.tar').delete();
+      mainDir.deleteSync(recursive: true);
+      if(Platform.isWindows){
+        File('$writePath\\restoreInfo.txt').delete();
+      }
+      if(Platform.isLinux){
+        File('$writePath/restoreInfo.txt').delete();
+      }
     }
-
-    /*
-
-    */
+    print('finish restore');
+    restorefinish = true;
   }
 
   Future<void> writeFile(List<FileSystemEntity> files, Directory writeDir,

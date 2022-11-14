@@ -18,7 +18,7 @@ class RestoreFile extends StatefulWidget {
 }
 
 class RestoreFileState extends State<RestoreFile> {
-  late String path = '/home/eric/Downloads';
+  late String path;
   String rootPath = '/';
   ScrollController scrollController = ScrollController();
   List<FileSystemEntity> file = <FileSystemEntity>[];
@@ -32,7 +32,7 @@ class RestoreFileState extends State<RestoreFile> {
   void initState() {
     super.initState();
     getBackUpRoot();
-    _listOfFiles();
+    //_listOfFiles();
   }
 
   void _listOfFiles() {
@@ -107,7 +107,14 @@ class RestoreFileState extends State<RestoreFile> {
   }
 
   String pathToName(String path) {
-    int pos = path.lastIndexOf('/');
+    late int pos;
+    if(Platform.isLinux){
+      pos = path.lastIndexOf('/');
+    }
+    if(Platform.isWindows){
+      pos = path.lastIndexOf('\\');
+    }
+
     return path.substring(pos + 1, path.length);
   }
 
@@ -167,36 +174,18 @@ class RestoreFileState extends State<RestoreFile> {
       ),
     );
     if (res) {
-      if (path == rootPath) {
-        for (int i = 0; i < file.length; i++) {
-          if (checkboxStatus[i]!) {
-            Directory tmpDir = file[i] as Directory;
-            List<FileSystemEntity> tmpList = tmpDir.listSync();
-            print(tmpList.length);
-            late FileSystemEntity remove;
-            for (var element in tmpList) {
-              if (element.path.substring(element.path.lastIndexOf('/') + 1) == 'restoreInfo.txt') {
-                remove = element;
-                print('remove');
-              }
-            }
-            tmpList.remove(remove);
-            print(tmpList.length);
-            WriteFile().restoreFile(tmpList);
-          }
-        }
-        return;
-      }
       WriteFile().restoreFile(tmp);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print('start build');
     return FutureBuilder(
       future: _appSupportDirectory,
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
+          print('this is done');
           if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           }
@@ -206,12 +195,14 @@ class RestoreFileState extends State<RestoreFile> {
               rootPath = dir.path;
               path = rootPath;
               file = Directory(path).listSync();
+              checkboxStatus = List.filled(file.length, false);
               sortFiles(file);
               hasInit = true;
             }
             return build1();
           }
         }
+        print('this is no data');
         return const Text('noData');
       },
     );

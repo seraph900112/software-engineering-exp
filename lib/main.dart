@@ -205,9 +205,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 } else {
                   prefs.setString('backPath', 'null');
                 }
-
-                if (!Directory(prefs.getString('backupPath')!).existsSync() ||
-                    !Directory(prefs.getString('restorePath')!).existsSync()) {
+                if (!Directory(prefs.getString('backupPath')!).existsSync() &&
+                    prefs.getString('backupPath') != 'default') {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) => AlertDialog(
@@ -216,7 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         style: TextStyle(color: Colors.blueAccent),
                       ),
                       content: const SizedBox(
-                          width: 500, height: 100, child: Text('please check your dir')),
+                          width: 500, height: 100, child: Text('please check your backup dir')),
                       actions: <Widget>[
                         TextButton(
                           onPressed: () {
@@ -234,10 +233,41 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   );
                   prefs.setString('backupPath', 'default');
+                  setState(() {
+                    settingKey.currentState!.backupController.text = "default";
+                  });
+                }
+
+                if (!Directory(prefs.getString('restorePath')!).existsSync() &&
+                    prefs.getString('restorePath') != 'default') {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text(
+                        'Warning!!!',
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                      content: const SizedBox(
+                          width: 500, height: 100, child: Text('please check your restore dir')),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
                   prefs.setString('restorePath', 'default');
                   setState(() {
-                    settingKey.currentState!.backupController.text = "";
-                    settingKey.currentState!.restoreController.text = "";
+                    settingKey.currentState!.restoreController.text = "default";
                   });
                 }
               }

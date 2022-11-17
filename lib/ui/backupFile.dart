@@ -174,7 +174,10 @@ class BackupFileState extends State<BackupFile> {
           });
 
       // Your asynchronous computation here (fetching data from an API, processing files, inserting something to the database, etc)
-      await WriteFile().backUpFile(tmp, pwdController.text);
+      bool res = await WriteFile().backUpFile(tmp, pwdController.text);
+      if(!res){
+
+      }
       // Close the dialog programmatically
       Navigator.of(context).pop();
       checkboxStatus.fillRange(0, checkboxStatus.length, false);

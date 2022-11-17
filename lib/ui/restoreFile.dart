@@ -35,10 +35,8 @@ class RestoreFileState extends State<RestoreFile> {
   @override
   void initState() {
     super.initState();
-    getBackUpRoot().then((value){
-      setState(() {
-
-      });
+    getBackUpRoot().then((value) {
+      setState(() {});
     });
     //_listOfFiles();
   }
@@ -62,7 +60,6 @@ class RestoreFileState extends State<RestoreFile> {
     }
     path = rootPath;
   }
-
 
   void changeDirectory(String path, bool back) {
     int pos = this.path.lastIndexOf('/');
@@ -246,9 +243,13 @@ class RestoreFileState extends State<RestoreFile> {
           builder: (_) {
             Future.delayed(Duration(seconds: 1)).then((value) async {
               int out = await writeFile.restoreFile(tmp, pwdController.text);
+
               //pwd wrong
               if (out == 2) {
-                Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
+                Future.delayed(Duration(seconds: 1)).then((value) {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                });
                 showDialog(
                     // The user CANNOT close this dialog  by pressing outsite it
                     barrierDismissible: false,
@@ -276,7 +277,10 @@ class RestoreFileState extends State<RestoreFile> {
               }
               //wrong file
               if (out == 1) {
-                Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
+                Future.delayed(Duration(seconds: 1)).then((value) {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                });
                 showDialog(
                     // The user CANNOT close this dialog  by pressing outsite it
                     barrierDismissible: false,
@@ -369,9 +373,7 @@ class RestoreFileState extends State<RestoreFile> {
   @override
   Widget build(BuildContext context) {
     print('start build');
-    if(pref.getString('rv') != 'default' || pref.getString('rv') != null){
-
-    }
+    if (pref.getString('rv') != 'default' || pref.getString('rv') != null) {}
     return FutureBuilder(
       future: _appSupportDirectory,
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
@@ -384,10 +386,10 @@ class RestoreFileState extends State<RestoreFile> {
             if (!hasInit) {
               Directory dir = snapshot.data;
               rootPath = dir.path;
-              if(pref.getString('rv') != 'default' && pref.getString('rv') != null){
+              if (pref.getString('rv') != 'default' && pref.getString('rv') != null) {
                 rootPath = pref.getString('rv');
                 path = rootPath;
-              }else{
+              } else {
                 path = rootPath;
               }
 

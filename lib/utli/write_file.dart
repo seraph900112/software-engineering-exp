@@ -18,7 +18,7 @@ import '../algrithom/tar_file_encode.dart';
 class WriteFile {
   bool restorefinish = false;
 
-  Future<void> backUpFile(List<FileSystemEntity> files, String pwd) async {
+  Future<bool> backUpFile(List<FileSystemEntity> files, String pwd) async {
     final pref = await SharedPreferences.getInstance();
     String backUpDir = (await getApplicationSupportDirectory()).path;
     //create a backup dir
@@ -61,7 +61,10 @@ class WriteFile {
       restoreInfo.writeAsString(restorePath);
     }
     //write to backUp dir
-    await writeFile(files, backupDir, originDir);
+    bool res = await writeFile(files, backupDir, originDir);
+    if(!res){
+      return false;
+    }
     //path = newDirPath
     print('start encode');
 
@@ -89,6 +92,7 @@ class WriteFile {
     File('$newDirPath.tar.haffman').deleteSync();
     File('$newDirPath.tar').deleteSync();
     //File('$newDirPath.tar').deleteSync();
+    return true;
   }
 
   Future<int> restoreFile(List<FileSystemEntity> files, String pwd) async {
@@ -161,7 +165,7 @@ class WriteFile {
     return 3;
   }
 
-  Future<void> writeFile(
+  Future<bool> writeFile(
       List<FileSystemEntity> files, Directory writeDir, Directory sourceDir) async {
     for (int i = 0; i < files.length; i++) {
       //backup Dir
@@ -196,8 +200,26 @@ class WriteFile {
         }
         File newFile = File('${writeDir.path}$fileName');
         newFile.writeAsBytesSync(tmpString);
+        if (!check(files[i] as File, newFile)) {
+          return false;
+        }
       }
     }
     print('write finish');
+    return true;
+  }
+
+  bool check(File origin, File newFile) {
+    if (origin.lengthSync() != newFile.lengthSync()) {
+      return false;
+    }
+    Uint8List origin8 = origin.readAsBytesSync();
+    Uint8List new8 = origin.readAsBytesSync();
+    for (int i = 0; i < origin8.length; i++) {
+      if (origin8[i] != new8[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 }

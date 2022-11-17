@@ -13,10 +13,10 @@ class decode_tarfile {
 
   decode_tarfile(String filepath) {
     if (Platform.isLinux) {
-      splitMark = '\\';
+      splitMark = '/';
     }
     if (Platform.isWindows) {
-      splitMark = '/';
+      splitMark = '\\';
     }
     this.source_tar_file = File(filepath);
   }

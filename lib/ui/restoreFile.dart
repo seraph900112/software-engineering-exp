@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:show_up_animation/show_up_animation.dart';
 
 import '../utli/write_file.dart';
@@ -49,7 +50,10 @@ class RestoreFileState extends State<RestoreFile> {
     if (_appSupportDirectory != null) {
       rootPath = (await _appSupportDirectory)!.path;
     }
-
+    final pref = await SharedPreferences.getInstance();
+    if (pref.getString('rv') != 'default' || pref.getString('rv') != null) {
+      rootPath == pref.getString('rv');
+    }
     print(rootPath);
     path = rootPath;
   }
@@ -235,12 +239,12 @@ class RestoreFileState extends State<RestoreFile> {
           context: context,
           builder: (_) {
             Future.delayed(Duration(seconds: 1)).then((value) async {
-              int out = await writeFile.restoreFile(tmp , pwdController.text);
+              int out = await writeFile.restoreFile(tmp, pwdController.text);
               //pwd wrong
-              if(out == 2){
+              if (out == 2) {
                 Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
                 showDialog(
-                  // The user CANNOT close this dialog  by pressing outsite it
+                    // The user CANNOT close this dialog  by pressing outsite it
                     barrierDismissible: false,
                     context: context,
                     builder: (_) {
@@ -265,10 +269,10 @@ class RestoreFileState extends State<RestoreFile> {
                 return;
               }
               //wrong file
-              if(out == 1){
+              if (out == 1) {
                 Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
                 showDialog(
-                  // The user CANNOT close this dialog  by pressing outsite it
+                    // The user CANNOT close this dialog  by pressing outsite it
                     barrierDismissible: false,
                     context: context,
                     builder: (_) {

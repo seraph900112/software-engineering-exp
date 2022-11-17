@@ -14,6 +14,7 @@ class Setting extends StatefulWidget {
 class SettingState extends State<Setting> {
   TextEditingController backupController = TextEditingController();
   TextEditingController restoreController = TextEditingController();
+  TextEditingController restoreViewController = TextEditingController();
   late final SharedPreferences prefs;
 
   @override
@@ -24,6 +25,7 @@ class SettingState extends State<Setting> {
       setState(() {
         backupController.text = prefs.getString('backupPath')!;
         restoreController.text = prefs.getString('restorePath')!;
+        restoreViewController.text = prefs.getString('rv')!;
       });
     });
   }
@@ -76,6 +78,30 @@ class SettingState extends State<Setting> {
                       labelText: "restore path",
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
                       hintText: "enter your restore path...",
+                      hintStyle: const TextStyle(fontStyle: FontStyle.italic),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black45, width: 1),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black45, width: 1),
+                          borderRadius: BorderRadius.circular(8.0)),
+                      contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 24)),
+                ),
+              ),
+              const SizedBox(
+                height: 30,
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width / 2,
+                child: TextField(
+                  controller: restoreViewController,
+                  decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.black12,
+                      labelText: "view restore path",
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                      hintText: "enter your view restore path...",
                       hintStyle: const TextStyle(fontStyle: FontStyle.italic),
                       enabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(color: Colors.black45, width: 1),

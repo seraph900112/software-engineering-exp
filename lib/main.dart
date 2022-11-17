@@ -265,9 +265,44 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                   );
-                  prefs.setString('restorePath', 'default');
+                  prefs.setString('rv', 'default');
                   setState(() {
                     settingKey.currentState!.restoreController.text = "default";
+                  });
+                }
+
+                if (!Directory(prefs.getString('rv')!).existsSync() &&
+                    prefs.getString('rv') != 'default') {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text(
+                        'Warning!!!',
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                      content: const SizedBox(
+                          width: 500,
+                          height: 100,
+                          child: Text('please check your restore view dir')),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                  prefs.setString('rv', 'default');
+                  setState(() {
+                    settingKey.currentState!.restoreViewController.text = "default";
                   });
                 }
               }

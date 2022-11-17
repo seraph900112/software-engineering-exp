@@ -27,13 +27,19 @@ class RestoreFileState extends State<RestoreFile> {
   late List<bool?> checkboxStatus;
   late Directory backupDir;
   bool hasInit = false;
+  String fuxk = 'x';
   Future<Directory?>? _appSupportDirectory;
   int count = 0;
+  late final pref;
 
   @override
   void initState() {
     super.initState();
-    getBackUpRoot();
+    getBackUpRoot().then((value){
+      setState(() {
+
+      });
+    });
     //_listOfFiles();
   }
 
@@ -50,13 +56,13 @@ class RestoreFileState extends State<RestoreFile> {
     if (_appSupportDirectory != null) {
       rootPath = (await _appSupportDirectory)!.path;
     }
-    final pref = await SharedPreferences.getInstance();
+    pref = await SharedPreferences.getInstance();
     if (pref.getString('rv') != 'default' || pref.getString('rv') != null) {
       rootPath == pref.getString('rv');
     }
-    print(rootPath);
     path = rootPath;
   }
+
 
   void changeDirectory(String path, bool back) {
     int pos = this.path.lastIndexOf('/');
@@ -363,6 +369,9 @@ class RestoreFileState extends State<RestoreFile> {
   @override
   Widget build(BuildContext context) {
     print('start build');
+    if(pref.getString('rv') != 'default' || pref.getString('rv') != null){
+
+    }
     return FutureBuilder(
       future: _appSupportDirectory,
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
@@ -375,7 +384,13 @@ class RestoreFileState extends State<RestoreFile> {
             if (!hasInit) {
               Directory dir = snapshot.data;
               rootPath = dir.path;
-              path = rootPath;
+              if(pref.getString('rv') != 'default' && pref.getString('rv') != null){
+                rootPath = pref.getString('rv');
+                path = rootPath;
+              }else{
+                path = rootPath;
+              }
+
               file = Directory(path).listSync();
               checkboxStatus = List.filled(file.length, false);
               sortFiles(file);

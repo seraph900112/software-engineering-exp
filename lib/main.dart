@@ -196,15 +196,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   await prefs.setString(
                       'backupPath', settingKey.currentState!.backupController.text);
                 } else {
-                  prefs.setString('backupPath', 'null');
+                  prefs.setString('backupPath', 'default');
                 }
 
-                if (settingKey.currentState!.backupController.text.isNotEmpty) {
+                if (settingKey.currentState!.restoreController.text.isNotEmpty) {
                   await prefs.setString(
                       'restorePath', settingKey.currentState!.restoreController.text);
                 } else {
-                  prefs.setString('backPath', 'null');
+                  prefs.setString('backPath', 'default');
                 }
+                if (settingKey.currentState!.restoreViewController.text.isNotEmpty) {
+                  await prefs.setString('rv', settingKey.currentState!.restoreViewController.text);
+                } else {
+                  prefs.setString('rv', 'default');
+                }
+
                 if (!Directory(prefs.getString('backupPath')!).existsSync() &&
                     prefs.getString('backupPath') != 'default') {
                   showDialog(
@@ -265,7 +271,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                   );
-                  prefs.setString('rv', 'default');
+                  prefs.setString('restorePath', 'default');
                   setState(() {
                     settingKey.currentState!.restoreController.text = "default";
                   });

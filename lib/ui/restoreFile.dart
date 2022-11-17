@@ -363,7 +363,7 @@ class RestoreFileState extends State<RestoreFile> {
                     Icons.check,
                     color: Colors.green,
                   ),
-                  Text("backup success！！")
+                  Text("restore success！！")
                 ],
               ),
             ),

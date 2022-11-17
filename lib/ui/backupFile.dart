@@ -204,7 +204,7 @@ class BackupFileState extends State<BackupFile> {
                     Icons.check,
                     color: Colors.green,
                   ),
-                  Text("backup success！！")
+                  Text("backup success！！ (0 failed!)")
                 ],
               ),
             ),

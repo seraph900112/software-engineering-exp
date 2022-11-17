@@ -234,12 +234,12 @@ class RestoreFileState extends State<RestoreFile> {
           context: context,
           builder: (_) {
             Future.delayed(Duration(seconds: 1)).then((value) async {
-              try {
-                writeFile.restoreFile(tmp);
-              } catch (e) {
+              int out = await writeFile.restoreFile(tmp , pwdController.text);
+              //pwd wrong
+              if(out == 2){
                 Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
                 showDialog(
-                    // The user CANNOT close this dialog  by pressing outsite it
+                  // The user CANNOT close this dialog  by pressing outsite it
                     barrierDismissible: false,
                     context: context,
                     builder: (_) {
@@ -254,6 +254,34 @@ class RestoreFileState extends State<RestoreFile> {
                               // The loading indicator
                               // Some text
                               Text('Password Wrong, plz retry')
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+                checkboxStatus.fillRange(0, checkboxStatus.length, false);
+                widget.changeCheckBoxStatus();
+                return;
+              }
+              //wrong file
+              if(out == 1){
+                Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
+                showDialog(
+                  // The user CANNOT close this dialog  by pressing outsite it
+                    barrierDismissible: false,
+                    context: context,
+                    builder: (_) {
+                      return Dialog(
+                        // The background color
+                        backgroundColor: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              // The loading indicator
+                              // Some text
+                              Text('plz choose right file')
                             ],
                           ),
                         ),

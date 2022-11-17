@@ -9,10 +9,7 @@ import 'package:show_up_animation/show_up_animation.dart';
 import '../utli/write_file.dart';
 
 class RestoreFile extends StatefulWidget {
-  const RestoreFile(
-      {super.key,
-      required this.checkboxVisible,
-      required this.changeCheckBoxStatus});
+  const RestoreFile({super.key, required this.checkboxVisible, required this.changeCheckBoxStatus});
 
   final bool checkboxVisible;
   final Function changeCheckBoxStatus;
@@ -70,8 +67,7 @@ class RestoreFileState extends State<RestoreFile> {
         checkboxStatus = List.filled(file.length, false);
         sortFiles(file);
         scrollController.animateTo(0,
-            duration: const Duration(milliseconds: 10),
-            curve: Curves.elasticOut);
+            duration: const Duration(milliseconds: 10), curve: Curves.elasticOut);
       });
     } catch (e) {
       //show alert dialog
@@ -124,6 +120,7 @@ class RestoreFileState extends State<RestoreFile> {
   }
 
   Future<void> restore() async {
+    TextEditingController pwdController = TextEditingController();
     List<FileSystemEntity> tmp = <FileSystemEntity>[];
     for (int i = 0; i < file.length; i++) {
       if (checkboxStatus[i]!) {
@@ -140,7 +137,7 @@ class RestoreFileState extends State<RestoreFile> {
         ),
         content: SizedBox(
           width: 500,
-          height: 100 + tmp.length * 20,
+          height: 150 + tmp.length * 20,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -159,6 +156,30 @@ class RestoreFileState extends State<RestoreFile> {
                     itemBuilder: (BuildContext context, int index) {
                       return Text(pathToName(tmp[index].path));
                     }),
+              ),
+              SizedBox(
+                height: 30,
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width / 2,
+                child: TextField(
+                  controller: pwdController,
+                  decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.black12,
+                      labelText: "backup PassWord",
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                      hintText: "enter your password...",
+                      hintStyle: const TextStyle(fontStyle: FontStyle.italic),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black45, width: 1),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black45, width: 1),
+                          borderRadius: BorderRadius.circular(8.0)),
+                      contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 24)),
+                ),
               )
             ],
           ),
@@ -172,11 +193,32 @@ class RestoreFileState extends State<RestoreFile> {
           ),
           TextButton(
             onPressed: () {
-              if (!mounted) {
-                return;
+              if (pwdController.text.isEmpty) {
+                Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context, true));
+                showDialog(
+                    // The user CANNOT close this dialog  by pressing outsite it
+                    barrierDismissible: false,
+                    context: context,
+                    builder: (_) {
+                      return Dialog(
+                        // The background color
+                        backgroundColor: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              // The loading indicator
+                              // Some text
+                              Text('Plz enter your pwd...')
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+              } else {
+                Navigator.pop(context, true);
               }
-
-              Navigator.pop(context, true);
             },
             child: const Text('OK'),
           ),
@@ -185,16 +227,43 @@ class RestoreFileState extends State<RestoreFile> {
     );
     if (res) {
       WriteFile writeFile = WriteFile();
-      print('aaaaaaaaaaaaaa');
       // show the loading dialog
       await showDialog(
           // The user CANNOT close this dialog  by pressing outsite it
           barrierDismissible: false,
           context: context,
           builder: (_) {
-            print('build---------------');
             Future.delayed(Duration(seconds: 1)).then((value) async {
-              writeFile.restoreFile(tmp);
+              try {
+                writeFile.restoreFile(tmp);
+              } catch (e) {
+                Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context));
+                showDialog(
+                    // The user CANNOT close this dialog  by pressing outsite it
+                    barrierDismissible: false,
+                    context: context,
+                    builder: (_) {
+                      return Dialog(
+                        // The background color
+                        backgroundColor: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              // The loading indicator
+                              // Some text
+                              Text('Password Wrong, plz retry')
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+                checkboxStatus.fillRange(0, checkboxStatus.length, false);
+                widget.changeCheckBoxStatus();
+                return;
+              }
+
               while (!writeFile.restorefinish) {
                 await Future.delayed(Duration(seconds: 1));
               }
@@ -299,10 +368,7 @@ class RestoreFileState extends State<RestoreFile> {
                   changeDirectory(path, true);
                 },
                 child: Row(
-                  children: const [
-                    Icon(Icons.keyboard_backspace),
-                    Text("back")
-                  ],
+                  children: const [Icon(Icons.keyboard_backspace), Text("back")],
                 ))
           ],
           Column(

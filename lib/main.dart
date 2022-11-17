@@ -7,14 +7,12 @@
 import 'dart:io' as io;
 import 'dart:io';
 
-import 'package:animations/animations.dart';
 import 'package:eyro_toast/eyro_toast.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:se_exp/ui/backupFile.dart';
 import 'package:se_exp/ui/restoreFile.dart';
-import 'package:se_exp/utli/write_file.dart';
-import 'package:show_up_animation/show_up_animation.dart';
+import 'package:se_exp/ui/setting.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,7 +46,9 @@ class _MyHomePageState extends State<MyHomePage> {
   String path = '/';
   GlobalKey<BackupFileState> backupKey = GlobalKey();
   GlobalKey<RestoreFileState> restoreKey = GlobalKey();
+  GlobalKey<SettingState> settingKey = GlobalKey();
   int selectIndex = 0;
+  Icon floatIcon = const Icon(Icons.add);
 
   @override
   void initState() {
@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void changeIndex(int index) {
     setState(() {
       selectIndex = index;
+      checkBoxVisible = false;
     });
   }
 
@@ -68,6 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
         checkboxVisible: checkBoxVisible,
         getPath: (String path) {
           setState(() {
+            floatIcon = const Icon(Icons.add);
             this.path = path;
           });
         },
@@ -77,15 +79,24 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
       );
+    } else if (selectIndex == 1) {
+      return RestoreFile(
+        key: restoreKey,
+        checkboxVisible: checkBoxVisible,
+        changeCheckBoxStatus: () {
+          setState(() {
+            floatIcon = const Icon(Icons.add);
+            checkBoxVisible = false;
+          });
+        },
+      );
     }
-    return RestoreFile(
-      key: restoreKey,
-      checkboxVisible: checkBoxVisible,
-      changeCheckBoxStatus: (){
-        setState(() {
-          checkBoxVisible = false;
-        });
-      },
+    setState(() {
+      floatIcon = const Icon(Icons.sd_card);
+    });
+    return Setting(
+      key: settingKey,
+      storeSetting: () {},
     );
   }
 
@@ -123,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: const Text('ViewBackUpFiles')),
               ),
               Padding(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height - 200),
+                padding: const EdgeInsets.only(bottom: 10, top: 20),
                 child: ElevatedButton(
                     style: ButtonStyle(
                       backgroundColor: selectIndex == 1
@@ -133,8 +144,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () {
                       changeIndex(1);
                     },
+                    child: const Text('ViewRestoreFiles')),
+              ),
+              Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height - 300, top: 20),
+                child: ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor: selectIndex == 2
+                          ? MaterialStateProperty.all<Color>(Colors.orange)
+                          : MaterialStateProperty.all<Color>(Colors.transparent),
+                    ),
+                    onPressed: () {
+                      changeIndex(2);
+                    },
                     child: const Text(
-                      'ViewRestoreFiles',
+                      'Setting',
                     )),
               ),
               ElevatedButton(
@@ -160,12 +184,66 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () {
+          onPressed: () async {
             setState(() {
               checkBoxVisible = !checkBoxVisible;
             });
+            if (selectIndex == 2) {
+              print(settingKey.currentState);
+              final prefs = await SharedPreferences.getInstance();
+              if (settingKey.currentState != null) {
+                if (settingKey.currentState!.backupController.text.isNotEmpty) {
+                  await prefs.setString(
+                      'backupPath', settingKey.currentState!.backupController.text);
+                } else {
+                  prefs.setString('backupPath', 'null');
+                }
+
+                if (settingKey.currentState!.backupController.text.isNotEmpty) {
+                  await prefs.setString(
+                      'restorePath', settingKey.currentState!.restoreController.text);
+                } else {
+                  prefs.setString('backPath', 'null');
+                }
+
+                if (!Directory(prefs.getString('backupPath')!).existsSync() ||
+                    !Directory(prefs.getString('restorePath')!).existsSync()) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text(
+                        'Warning!!!',
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                      content: const SizedBox(
+                          width: 500, height: 100, child: Text('please check your dir')),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                  prefs.setString('backupPath', 'default');
+                  prefs.setString('restorePath', 'default');
+                  setState(() {
+                    settingKey.currentState!.backupController.text = "";
+                    settingKey.currentState!.restoreController.text = "";
+                  });
+                }
+              }
+            }
           },
-          child: const Icon(Icons.add)),
+          child: floatIcon),
     );
   }
 }

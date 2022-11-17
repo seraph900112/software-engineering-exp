@@ -37,11 +37,15 @@ class BackupFileState extends State<BackupFile> {
   }
 
   Future<void> backUp() async {
+    TextEditingController pwdController = TextEditingController();
     List<FileSystemEntity> tmp = <FileSystemEntity>[];
     for (int i = 0; i < file.length; i++) {
       if (checkboxStatus[i]!) {
         tmp.add(file[i]);
       }
+    }
+    if (tmp.isEmpty) {
+      return;
     }
     bool res = await showDialog(
       context: context,
@@ -52,7 +56,7 @@ class BackupFileState extends State<BackupFile> {
         ),
         content: SizedBox(
           width: 500,
-          height: 100 + tmp.length * 20,
+          height: 150 + tmp.length * 20,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -71,6 +75,30 @@ class BackupFileState extends State<BackupFile> {
                     itemBuilder: (BuildContext context, int index) {
                       return Text(pathToName(tmp[index].path));
                     }),
+              ),
+              SizedBox(
+                height: 30,
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width / 2,
+                child: TextField(
+                  controller: pwdController,
+                  decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.black12,
+                      labelText: "backup PassWord",
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                      hintText: "enter your password...",
+                      hintStyle: const TextStyle(fontStyle: FontStyle.italic),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black45, width: 1),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black45, width: 1),
+                          borderRadius: BorderRadius.circular(8.0)),
+                      contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 24)),
+                ),
               )
             ],
           ),
@@ -84,13 +112,39 @@ class BackupFileState extends State<BackupFile> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context, true);
+              if (pwdController.text.isEmpty) {
+                Future.delayed(Duration(seconds: 1)).then((value) => Navigator.pop(context, true));
+                showDialog(
+                    // The user CANNOT close this dialog  by pressing outsite it
+                    barrierDismissible: false,
+                    context: context,
+                    builder: (_) {
+                      return Dialog(
+                        // The background color
+                        backgroundColor: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              // The loading indicator
+                              // Some text
+                              Text('Plz enter your pwd...')
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+              } else {
+                Navigator.pop(context, true);
+              }
             },
             child: const Text('OK'),
           ),
         ],
       ),
     );
+
     if (res) {
       // show the loading dialog
       showDialog(
@@ -120,7 +174,7 @@ class BackupFileState extends State<BackupFile> {
           });
 
       // Your asynchronous computation here (fetching data from an API, processing files, inserting something to the database, etc)
-      await WriteFile().backUpFile(tmp);
+      await WriteFile().backUpFile(tmp, pwdController.text);
       // Close the dialog programmatically
       Navigator.of(context).pop();
       checkboxStatus.fillRange(0, checkboxStatus.length, false);
@@ -180,8 +234,7 @@ class BackupFileState extends State<BackupFile> {
         checkboxStatus = List.filled(file.length, false);
         sortFiles(file);
         scrollController.animateTo(0,
-            duration: const Duration(milliseconds: 10),
-            curve: Curves.elasticOut);
+            duration: const Duration(milliseconds: 10), curve: Curves.elasticOut);
       });
     } catch (e) {
       print(e);
@@ -241,10 +294,7 @@ class BackupFileState extends State<BackupFile> {
                   widget.getPath(path);
                 },
                 child: Row(
-                  children: const [
-                    Icon(Icons.keyboard_backspace),
-                    Text("back")
-                  ],
+                  children: const [Icon(Icons.keyboard_backspace), Text("back")],
                 ))
           ],
           Column(

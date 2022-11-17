@@ -3,21 +3,29 @@ import 'dart:typed_data';
 
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../algrithom/ase.dart';
+
 //import '../algrithom/decode_haffman.dart';
 import '../algrithom/decode2.dart';
+
 //import '../algrithom/encode_haffman.dart';
 import '../algrithom/encode_haffman2.dart';
 import '../algrithom/tar_file_decode.dart';
 import '../algrithom/tar_file_encode.dart';
 
 class WriteFile {
-
   bool restorefinish = false;
-  Future<void> backUpFile(List<FileSystemEntity> files) async {
-    //create a backup dir
+
+  Future<void> backUpFile(List<FileSystemEntity> files, String pwd) async {
+    final pref = await SharedPreferences.getInstance();
     String backUpDir = (await getApplicationSupportDirectory()).path;
+    //create a backup dir
+    if (pref.getString('backupPath') != 'default' && pref.getString('backupPath') != null) {
+      backUpDir = pref.getString('backupPath')!;
+    }
+
     print('this is write file: $backUpDir');
     String date = DateFormat("yyyy-MM-dd").format(DateTime.now());
     String time = DateFormat("hh-mm-ss").format(DateTime.now());
@@ -27,7 +35,6 @@ class WriteFile {
     if (Platform.isLinux) {
       newDirPath = '$backUpDir/$date$time';
     }
-
     if (Platform.isWindows) {
       newDirPath = '$backUpDir\\$date$time';
     }
@@ -36,20 +43,23 @@ class WriteFile {
     if (!backupDir.existsSync()) {
       backupDir.createSync();
     }
+    String? restorePath = pref.getString('restorePath');
+
     //record restore path;
     if (Platform.isWindows) {
       File restoreInfo = File('${backupDir.path}\\restoreInfo.txt');
-      String restorePath =
-          files[0].path.substring(0, files[0].path.lastIndexOf('\\'));
+      if (restorePath == 'default' || restorePath == null) {
+        restorePath = files[0].path.substring(0, files[0].path.lastIndexOf('\\'));
+      }
       restoreInfo.writeAsString(restorePath);
     }
     if (Platform.isLinux) {
       File restoreInfo = File('${backupDir.path}/restoreInfo.txt');
-      String restorePath =
-          files[0].path.substring(0, files[0].path.lastIndexOf('/'));
+      if (restorePath == 'default' || restorePath == null) {
+        restorePath = files[0].path.substring(0, files[0].path.lastIndexOf('/'));
+      }
       restoreInfo.writeAsString(restorePath);
     }
-
     //write to backUp dir
     await writeFile(files, backupDir, originDir);
     //path = newDirPath
@@ -70,7 +80,7 @@ class WriteFile {
       await Future.delayed(Duration(milliseconds: 500));
       print(haffman.finished);
     }*/
-    var ase = encrypt_file('$newDirPath.tar.haffman', 'hshs');
+    var ase = encrypt_file('$newDirPath.tar.haffman', pwd);
     print('start aes');
     ase.encryptfile();
     print('finish aes');
@@ -79,7 +89,6 @@ class WriteFile {
     File('$newDirPath.tar.haffman').deleteSync();
     File('$newDirPath.tar').deleteSync();
     //File('$newDirPath.tar').deleteSync();
-
   }
 
   Future<void> restoreFile(List<FileSystemEntity> files) async {
@@ -89,47 +98,46 @@ class WriteFile {
     }
     for (int i = 0; i < files.length; i++) {
       //解密
-      print('start aes___'+files[i].path);
-      var ase=decrypt_file(files[i].path,'hshs');
+      print('start aes___' + files[i].path);
+      var ase = decrypt_file(files[i].path, 'hshs');
       ase.decryptfile();
       //反压缩
-      var tst=haffman_decode(files[i].path.replaceAll('.aes',''));
+      var tst = haffman_decode(files[i].path.replaceAll('.aes', ''));
       tst.haffmandecode();
       print('finish haffman');
       //解包
-      var decode=decode_tarfile(files[i].path.replaceAll('.haffman.aes',''));
+      var decode = decode_tarfile(files[i].path.replaceAll('.haffman.aes', ''));
       await decode.decodetarfile();
 
       RegExp regexp = RegExp(r'(\d{4}-\d{2}-\d{4}-\d{2}-\d{2})');
       FileSystemEntity file = files[i];
       int pos = file.path.indexOf(regexp) + 18;
       String prefix = file.path.substring(0, pos);
-      print('prefix'+ prefix);
+      print('prefix' + prefix);
       late File restoreInfo;
-      if(Platform.isWindows){
+      if (Platform.isWindows) {
         restoreInfo = File('$prefix\\restoreInfo.txt');
       }
-      if(Platform.isLinux){
+      if (Platform.isLinux) {
         restoreInfo = File('$prefix/restoreInfo.txt');
       }
 
       String originPath = restoreInfo.readAsStringSync();
       print(restoreInfo.lengthSync());
-      print('origin'+originPath);
+      print('origin' + originPath);
       String writePath = originPath;
-      print(files[i].path.substring(0 , files[i].path.length -16));
-      Directory mainDir = Directory(files[i].path.substring(0 , files[i].path.length -16));
+      print(files[i].path.substring(0, files[i].path.length - 16));
+      Directory mainDir = Directory(files[i].path.substring(0, files[i].path.length - 16));
       //write file
       await writeFile(mainDir.listSync(), Directory(writePath), Directory(files[0].path));
-
 
       File('$prefix.tar.haffman').delete();
       File('$prefix.tar').delete();
       mainDir.deleteSync(recursive: true);
-      if(Platform.isWindows){
+      if (Platform.isWindows) {
         File('$writePath\\restoreInfo.txt').delete();
       }
-      if(Platform.isLinux){
+      if (Platform.isLinux) {
         File('$writePath/restoreInfo.txt').delete();
       }
     }
@@ -137,17 +145,17 @@ class WriteFile {
     restorefinish = true;
   }
 
-  Future<void> writeFile(List<FileSystemEntity> files, Directory writeDir,
-      Directory sourceDir) async {
+  Future<void> writeFile(
+      List<FileSystemEntity> files, Directory writeDir, Directory sourceDir) async {
     for (int i = 0; i < files.length; i++) {
       //backup Dir
       if (files[i] is Directory) {
         Directory tmp = files[i] as Directory;
         late String tmpName;
-        if(Platform.isWindows){
+        if (Platform.isWindows) {
           tmpName = tmp.path.substring(tmp.path.lastIndexOf('\\'));
         }
-        if(Platform.isLinux){
+        if (Platform.isLinux) {
           tmpName = tmp.path.substring(tmp.path.lastIndexOf('/'));
         }
         Directory newDir = Directory('${writeDir.path}$tmpName');
@@ -165,12 +173,10 @@ class WriteFile {
         Uint8List tmpString = await tmp.readAsBytes();
         late String fileName;
         if (Platform.isWindows) {
-          fileName =
-              tmp.path.substring(tmp.path.lastIndexOf('\\'), tmp.path.length);
+          fileName = tmp.path.substring(tmp.path.lastIndexOf('\\'), tmp.path.length);
         }
         if (Platform.isLinux) {
-          fileName =
-              tmp.path.substring(tmp.path.lastIndexOf('/'), tmp.path.length);
+          fileName = tmp.path.substring(tmp.path.lastIndexOf('/'), tmp.path.length);
         }
         File newFile = File('${writeDir.path}$fileName');
         newFile.writeAsBytesSync(tmpString);

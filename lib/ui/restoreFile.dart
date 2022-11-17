@@ -233,6 +233,7 @@ class RestoreFileState extends State<RestoreFile> {
         ],
       ),
     );
+    int out = -1;
     if (res) {
       WriteFile writeFile = WriteFile();
       // show the loading dialog
@@ -242,7 +243,7 @@ class RestoreFileState extends State<RestoreFile> {
           context: context,
           builder: (_) {
             Future.delayed(Duration(seconds: 1)).then((value) async {
-              int out = await writeFile.restoreFile(tmp, pwdController.text);
+              out = await writeFile.restoreFile(tmp, pwdController.text);
 
               //pwd wrong
               if (out == 2) {
@@ -341,7 +342,9 @@ class RestoreFileState extends State<RestoreFile> {
     } else {
       return;
     }
-
+    if (out > 1) {
+      return;
+    }
     showDialog(
         // The user CANNOT close this dialog  by pressing outsite it
         barrierDismissible: false,
